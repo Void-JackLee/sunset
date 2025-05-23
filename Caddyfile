@@ -1,0 +1,21 @@
+:9000 {
+    reverse_proxy /* localhost:8080
+    handle_path /sunset/api/* {
+         rewrite * /api{path}
+         reverse_proxy localhost:8190
+    }
+}
+
+:9180 {
+    reverse_proxy /sunset/* localhost:8080
+    reverse_proxy /* {
+        to https://embed.windy.com
+        header_up -Via
+        header_up Host embed.windy.com
+        header_up -X-Forwarded-For
+        header_up -X-Forwarded-Host
+        header_up -X-Forwarded-Proto
+        header_up Sec-Fetch-Site cross-site
+        header_up Connection keep-alive
+    }
+}
