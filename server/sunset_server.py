@@ -86,12 +86,11 @@ def ok(data: dict):
     )
 
 app = FastAPI()
-base = 'sunset'
 
-@app.get(f"/{base}/api/getSunsetTime")
+@app.get("/api/getSunsetTime")
 async def getSunsetTime(lat: float, lng: float):
     return ok(getSunsetPolyLine(lat, lng))
 
-@app.get(f"/{base}/api/getSunriseTime")
+@app.get("/api/getSunriseTime")
 async def getSunriseTime(lat: float, lng: float):
     return ok(getSunrisePolyLine(lat, lng))
