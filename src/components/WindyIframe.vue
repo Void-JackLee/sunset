@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { getAttr } from "../util/util.js";
 import {getJSON} from "../util/request.js";
 import {message} from "ant-design-vue";
+import {words} from "lodash-es";
 
 const windy = ref()
 
@@ -11,8 +12,9 @@ window.addEventListener("message",e => {
     console.log("run " + e.data.name);
     const L = windy.value.contentWindow.L;
     const map = windy.value.contentWindow.W.map.map;
+    const W = windy.value.contentWindow.W
     const func = eval(e.data.func)
-    func(e.data.data,L,map)
+    func(e.data.data,L,map,W)
   }
 })
 
