@@ -12,64 +12,53 @@ const lng = ref(120.117)
 const lineData = ref({})
 
 const type = ref("sunset")
+const overlay = ref("satellite")
+const product = ref("ecmwf")
 
 const getFuncString = (func) => {
   return func.toString() + "\n" + func.name;
 }
 
-const init = async () => {
-  function mount(data, L, map) {
-    const srcDotIcon = L.divIcon({ html: '<div style="width: 15px;height: 15px;border-radius: 7.5px;background: #7553f2"></div>' });
-    const midDotIcon = L.divIcon({ html: '<div style="width: 10px;height: 10px;border-radius: 5px;background: #17aa03"></div>' });
-    const targetDotIcon = L.divIcon({ html: '<div style="width: 10px;height: 10px;border-radius: 5px;background: #318bff"></div>' });
-    const lines = [
-      L.polyline(data['target'], {color: '#ff2400', weight: 2}),
-      L.polyline(data['before30'], {color: '#ff5900', weight: 2}),
-      L.polyline(data['after30'], {color: '#cc0000', weight: 2}),
-    ]
-    const markers = [
-      L.marker(data['target'][0], { icon: srcDotIcon }),
-      L.marker(data['before30'][1], { icon: midDotIcon }),
-      L.marker(data['target'][1], { icon: midDotIcon }),
-      L.marker(data['after30'][1], { icon: midDotIcon }),
-      L.marker(data['before30'][2], { icon: targetDotIcon }),
-      L.marker(data['target'][2], { icon: targetDotIcon }),
-      L.marker(data['after30'][2], { icon: targetDotIcon })
-    ]
-    window.lines = lines
-    window.markers = markers
-    for (const line of lines) {
-      line.addTo(map)
-    }
-    for (const marker of markers) {
-      marker.addTo(map)
-    }
-  }
-
-  try {
-    const res = await getJSON(`api/getSunsetTime?lat=${lat.value}&lng=${lng.value}&marker=false`);
-    lineData.value = res.data;
-    windy.value.contentWindow.postMessage({
-      type: 'run',
-      name: mount.name,
-      func: getFuncString(mount),
-      data: res.data
-    },'*')
-  } catch (e) {
-    message.error(JSON.stringify(e))
-  }
+const getSunset = async () => {
+  const res = await getJSON(`api/getSunsetTime?lat=${lat.value}&lng=${lng.value}`);
+  lineData.value = res.data;
 }
 
-window.addEventListener("message",e => {
-  if (e.data === 'doneLoad') {
-    init()
-  }
-})
+const getSunrise = async () => {
+  const res = await getJSON(`api/getSunriseTime?lat=${lat.value}&lng=${lng.value}`);
+  lineData.value = res.data;
+}
 
-const setLineAndMarker = (data) => {
+const setLineAndMarker = (val) => {
+  const data = JSON.parse(JSON.stringify(val))
   function move(data, L, map) {
-    const lines = window.lines
-    const markers = window.markers
+    const init = (lineData, markerData) => {
+      const srcDotIcon = L.divIcon({ html: '<div style="width: 15px;height: 15px;border-radius: 7.5px;background: #7553f2"></div>' });
+      const midDotIcon = L.divIcon({ html: '<div style="width: 10px;height: 10px;border-radius: 5px;background: #17aa03"></div>' });
+      const targetDotIcon = L.divIcon({ html: '<div style="width: 10px;height: 10px;border-radius: 5px;background: #318bff"></div>' });
+      const lines = [
+        L.polyline(lineData[0], {color: '#ff2400', weight: 2}),
+        L.polyline(lineData[1], {color: '#ff5900', weight: 2}),
+        L.polyline(lineData[2], {color: '#cc0000', weight: 2}),
+      ]
+      const markers = [
+        L.marker(markerData[0], { icon: srcDotIcon }),
+        L.marker(markerData[1], { icon: midDotIcon }),
+        L.marker(markerData[2], { icon: midDotIcon }),
+        L.marker(markerData[3], { icon: midDotIcon }),
+        L.marker(markerData[4], { icon: targetDotIcon }),
+        L.marker(markerData[5], { icon: targetDotIcon }),
+        L.marker(markerData[6], { icon: targetDotIcon })
+      ]
+      window.lines = lines
+      window.markers = markers
+      for (const line of lines) {
+        line.addTo(map)
+      }
+      for (const marker of markers) {
+        marker.addTo(map)
+      }
+    }
 
     const lineData = [
       data['target'], data['before30'], data['after30']
@@ -85,12 +74,19 @@ const setLineAndMarker = (data) => {
       data['after30'][2]
     ]
 
-    for (const i in lineData) {
-      lines[i].setLatLngs(lineData[i])
-    }
+    if (!window.lines || !window.markers) {
+      init(lineData, markerData)
+    } else {
+      const lines = window.lines
+      const markers = window.markers
 
-    for (const i in markerData) {
-      markers[i].setLatLng(markerData[i])
+      for (const i in lineData) {
+        lines[i].setLatLngs(lineData[i])
+      }
+
+      for (const i in markerData) {
+        markers[i].setLatLng(markerData[i])
+      }
     }
   }
 
@@ -105,35 +101,83 @@ const setLineAndMarker = (data) => {
 const changeType = async () => {
   if (type.value === 'sunset') {
     try {
-      const res = await getJSON(`api/getSunsetTime?lat=${lat.value}&lng=${lng.value}`);
-      lineData.value = res.data;
-      setLineAndMarker(res.data)
+      await getSunset()
+      setLineAndMarker(lineData.value)
     } catch (e) {
       message.error(JSON.stringify(e))
     }
   } else if (type.value === 'sunrise') {
     try {
-      const res = await getJSON(`api/getSunriseTime?lat=${lat.value}&lng=${lng.value}`);
-      lineData.value = res.data;
-      setLineAndMarker(res.data)
+      await getSunrise()
+      setLineAndMarker(lineData.value)
     } catch (e) {
       message.error(JSON.stringify(e))
     }
   }
 }
 
+const changeOverlay = () => {
+  function setOverlay(data, L, map, W) {
+    W.store.set('overlay',data.overlay)
+    W.store.set('product',data.product)
+  }
+  windy.value.contentWindow.postMessage({
+    type: 'run',
+    name: setOverlay.name,
+    func: getFuncString(setOverlay),
+    data: {
+      overlay: overlay.value,
+      product: product.value
+    }
+  },'*')
+}
 
-onMounted(() => {
+const changeProduct = () => {
+  function setProduct(data, L, map, W) {
+    W.store.set('product',data)
+  }
+  windy.value.contentWindow.postMessage({
+    type: 'run',
+    name: setProduct.name,
+    func: getFuncString(setProduct),
+    data: product.value
+  },'*')
+}
+
+// ----- 初始化 Start -----
+const init = () => {
+  try {
+    setLineAndMarker(lineData.value)
+  } catch (e) {
+    message.error(e)
+  }
+}
+
+onMounted(async () => {
+  const load = async () => {
+    try {
+      await getSunset()
+      loadMap.value = true
+      window.addEventListener("message",e => {
+        if (e.data === 'doneLoad') {
+          init()
+        }
+      })
+    } catch (e) {
+      message.error(JSON.stringify(e))
+    }
+  }
   // 1. 获取位置信息
-  navigator.geolocation.getCurrentPosition(position => {
+  navigator.geolocation.getCurrentPosition(async position => {
     lat.value = position.coords.latitude
     lng.value = position.coords.longitude
-    loadMap.value = true
-  }, err => {
+    load()
+  }, async err => {
     console.log('using default')
-    loadMap.value = true
+    load()
   })
 })
+// ----- 初始化 End -----
 </script>
 
 <template>
@@ -141,11 +185,27 @@ onMounted(() => {
   <div class="content">
     <a-card>
       <div class="vcenter">
-        <span>类型：</span>
-        <a-radio-group v-model:value="type" button-style="solid" @change="changeType">
-          <a-radio-button value="sunset">晚霞</a-radio-button>
-          <a-radio-button value="sunrise">朝霞</a-radio-button>
-        </a-radio-group>
+        <span class="item">
+          <span>类型：</span>
+          <a-radio-group v-model:value="type" button-style="solid" @change="changeType">
+            <a-radio-button value="sunset">晚霞</a-radio-button>
+            <a-radio-button value="sunrise">朝霞</a-radio-button>
+          </a-radio-group>
+        </span>
+        <span class="item">
+          <span>图层：</span>
+          <a-radio-group v-model:value="overlay" button-style="solid" @change="changeOverlay">
+            <a-radio-button value="satellite">云图</a-radio-button>
+            <a-radio-button value="clouds">云预测</a-radio-button>
+          </a-radio-group>
+        </span>
+        <span class="item">
+          <span>预报：</span>
+          <a-radio-group v-model:value="product" button-style="solid" @change="changeProduct">
+            <a-radio-button value="ecmwf">ecm</a-radio-button>
+            <a-radio-button value="gfs">gfs</a-radio-button>
+          </a-radio-group>
+        </span>
       </div>
     </a-card>
   </div>
@@ -172,6 +232,9 @@ onMounted(() => {
 .vcenter {
   display: flex;
   align-items: center;
+  .item {
+    margin-right: 10px;
+  }
 }
 
 #windy-container {
@@ -195,7 +258,7 @@ onMounted(() => {
   color: white;
 }
 
-::v-deep {
+:deep {
   .ant-card-body {
     padding: 5px 10px !important;
   }
