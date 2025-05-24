@@ -2,6 +2,7 @@
 import {computed, onMounted, ref} from "vue";
 import {message} from "ant-design-vue";
 import {getJSON} from "../util/request.js";
+import dayjs from 'dayjs';
 
 const windy = ref()
 
@@ -14,18 +15,19 @@ const lineData = ref({})
 const type = ref("sunset")
 const overlay = ref("satellite")
 const product = ref("ecmwf")
+const date = ref(dayjs())
 
 const getFuncString = (func) => {
   return func.toString() + "\n" + func.name;
 }
 
 const getSunset = async () => {
-  const res = await getJSON(`api/getSunsetTime?lat=${lat.value}&lng=${lng.value}`);
+  const res = await getJSON(`api/getSunsetTime?lat=${lat.value}&lng=${lng.value}&time=${date.value.valueOf()}`);
   lineData.value = res.data;
 }
 
 const getSunrise = async () => {
-  const res = await getJSON(`api/getSunriseTime?lat=${lat.value}&lng=${lng.value}`);
+  const res = await getJSON(`api/getSunriseTime?lat=${lat.value}&lng=${lng.value}&time=${date.value.valueOf()}`);
   lineData.value = res.data;
 }
 
@@ -144,6 +146,12 @@ const changeProduct = () => {
   },'*')
 }
 
+const changeDate = () => {
+  if (date.value) {
+    changeType()
+  }
+}
+
 // ----- 初始化 Start -----
 const init = () => {
   try {
@@ -207,6 +215,10 @@ onMounted(async () => {
           </a-radio-group>
         </span>
       </div>
+      <div class="vcenter">
+        <span class="item">通道时间: </span>
+        <a-date-picker v-model:value="date" @change="changeDate"/>
+      </div>
     </a-card>
   </div>
   <div id="container">
@@ -240,6 +252,12 @@ onMounted(async () => {
     color: white;
   }
 
+  .ant-picker {
+    background: transparent;
+    color: white !important;
+    border-color: #555;
+  }
+
   .divider {
     position: relative;
     padding: 7px 5px;
@@ -257,6 +275,9 @@ onMounted(async () => {
 }
 
 .vcenter {
+  &:not(:first-child) {
+    margin-top: 5px;
+  }
   display: flex;
   align-items: center;
   .item {
@@ -303,6 +324,23 @@ onMounted(async () => {
     background: transparent;
     color: white;
     border-color: #555;
+  }
+
+  .ant-picker-input {
+    input, .ant-picker-suffix {
+      color: white;
+    }
+
+    input::placeholder {
+      color: white;
+    }
+
+
+
+    .ant-picker-clear {
+      background: #242424;
+      color: #FFFFFF99;
+    }
   }
 }
 </style>

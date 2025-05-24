@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException, Form
-from datetime import timedelta
+from datetime import timedelta, datetime
 from geopy.distance import distance
 import time
 import math
@@ -88,9 +88,9 @@ def ok(data: dict):
 app = FastAPI()
 
 @app.get("/api/getSunsetTime")
-async def getSunsetTime(lat: float, lng: float):
-    return ok(getSunsetPolyLine(lat, lng))
+async def getSunsetTime(lat: float, lng: float, time: int):
+    return ok(getSunsetPolyLine(lat, lng, datetime.fromtimestamp(time / 1000).strftime('%Y%m%d')))
 
 @app.get("/api/getSunriseTime")
-async def getSunriseTime(lat: float, lng: float):
-    return ok(getSunrisePolyLine(lat, lng))
+async def getSunriseTime(lat: float, lng: float, time: int):
+    return ok(getSunrisePolyLine(lat, lng, datetime.fromtimestamp(time / 1000).strftime('%Y%m%d')))
