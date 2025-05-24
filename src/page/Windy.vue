@@ -276,6 +276,7 @@ onMounted(async () => {
 }
 
 .bottom {
+  padding-bottom: 5px !important;
   .info {
     margin-bottom: 5px;
     >span {

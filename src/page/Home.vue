@@ -20,7 +20,7 @@ const year = ref(new Date().getFullYear())
       </a-menu>
     </a-layout-header>
     <router-view style="flex: 1" />
-    <footer style="bottom: 10px;text-align: center">
+    <footer class="footer">
       © Void-JackLee 2025-{{ year }} <a href="https://beian.miit.gov.cn" target="_blank">浙ICP备20011690号-4</a>
     </footer>
   </div>
@@ -44,5 +44,10 @@ const year = ref(new Date().getFullYear())
   font-weight: bold;
   background: #001529;
   color: white;
+}
+
+.footer {
+  padding-bottom: 5px;
+  text-align: center
 }
 </style>
