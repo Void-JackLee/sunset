@@ -9,7 +9,7 @@ const year = ref(new Date().getFullYear())
 <template>
   <div id="home">
     <a-layout-header>
-      <div class="logo">Void火烧云</div>
+      <div class="logo">Void晚霞观测</div>
       <a-menu
           v-model:selectedKeys="selectedKeys"
           theme="dark"
