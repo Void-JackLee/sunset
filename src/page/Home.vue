@@ -2,6 +2,8 @@
 import {ref} from "vue";
 
 const selectedKeys = ref(['windy']);
+
+const year = ref(new Date().getFullYear())
 </script>
 
 <template>
@@ -18,6 +20,9 @@ const selectedKeys = ref(['windy']);
       </a-menu>
     </a-layout-header>
     <router-view style="flex: 1" />
+    <footer style="bottom: 10px;text-align: center">
+      © Void-JackLee 2025-{{ year }} <a href="https://beian.miit.gov.cn" target="_blank">浙ICP备20011690号-4</a>
+    </footer>
   </div>
 
 </template>
