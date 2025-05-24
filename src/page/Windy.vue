@@ -196,7 +196,7 @@ onMounted(async () => {
           <span>图层：</span>
           <a-radio-group v-model:value="overlay" button-style="solid" @change="changeOverlay">
             <a-radio-button value="satellite">云图</a-radio-button>
-            <a-radio-button value="clouds">云预测</a-radio-button>
+            <a-radio-button value="clouds">预测</a-radio-button>
           </a-radio-group>
         </span>
         <span class="item">
@@ -212,21 +212,48 @@ onMounted(async () => {
   <div id="container">
     <iframe v-if="loadMap" ref="windy" id="windy" :src="`//${domain}:9180/sunset/windy_iframe?lat=${lat}&lon=${lng}`" frameborder="0"></iframe>
   </div>
-  <div class="content">
-    <div style="margin-bottom: 5px">
+  <div class="content bottom">
+    <div class="info">
       <span><b>经纬度:</b> {{lat}}, {{lng}}</span>
-      <span style="margin-left: 10px"><b>{{ type === 'sunset' ? '落日' : '日出' }}时间:</b> {{ lineData.time }}</span>
+      <span><b>{{ type === 'sunset' ? '落日' : '日出' }}时间:</b> {{ lineData.time }}</span>
     </div>
-    <div>说明：<span style="color: #ff5900">浅橙色</span>代表太阳落日前30分钟线，<span style="color: #ff2400">橙色</span>代表落日线，<span style="color: #cc0000">暗红色</span>代表太阳落日后30分钟线；<span style="color: #7553f2;">紫色点</span>代表您的位置，<span style="color: #17aa03;">绿色点</span>代表距离您200km处，<span style="color: #318bff;">蓝色点</span>代表距离您400km处。一般而言，<b><span style="color: #7553f2;">紫色点</span>和<span style="color: #17aa03;">绿色点</span>之间有云，<span style="color: #17aa03;">绿色点</span>和<span style="color: #318bff;">蓝色点</span>之间没有云，说明有<span style="color: #ff2400">晚霞</span>。</b>如果<span style="color: #7553f2;">紫色点</span>和<span style="color: #17aa03;">绿色点</span>之间的云太厚了，那么无云空间需要离您更近才可能会烧。</div>
+    <div class="divider"></div>
+    <div class="tip">说明：<span style="color: #ff5900">浅橙色</span>代表太阳落日前30分钟线，<span style="color: #ff2400">橙色</span>代表落日线，<span style="color: #cc0000">暗红色</span>代表太阳落日后30分钟线；<span style="color: #7553f2;">紫色点</span>代表您的位置，<span style="color: #17aa03;">绿色点</span>代表距离您200km处，<span style="color: #318bff;">蓝色点</span>代表距离您400km处。一般而言，<b><span style="color: #7553f2;">紫色点</span>和<span style="color: #17aa03;">绿色点</span>之间有云，<span style="color: #17aa03;">绿色点</span>和<span style="color: #318bff;">蓝色点</span>之间没有云，说明有<span style="color: #ff2400">晚霞</span>。</b>如果<span style="color: #7553f2;">紫色点</span>和<span style="color: #17aa03;">绿色点</span>之间的云太厚了，那么无云空间需要离您更近才可能会烧。</div>
   </div>
 </div>
 </template>
 
 <style lang="scss" scoped>
+#windy-container {
+  height: 100%;
+  //overflow: hidden;
+  display: flex;
+  flex-direction: column;
 
-.content {
-  //height: 100px;
-  padding: 10px;
+  .content {
+    padding: 10px;
+  }
+
+  .ant-card {
+    border-color: #555;
+    background-color: #242424;
+    color: white;
+  }
+
+  .divider {
+    position: relative;
+    padding: 7px 5px;
+    clear: both;
+    &:before {
+      content: '';
+      background-color: #3c3c3c;
+      width: 100%;
+      height: 1px;
+      position: absolute;
+      bottom: 7px;
+      left: 0;
+    }
+  }
 }
 
 .vcenter {
@@ -234,14 +261,10 @@ onMounted(async () => {
   align-items: center;
   .item {
     margin-right: 10px;
+    >span {
+      word-break: keep-all;
+    }
   }
-}
-
-#windy-container {
-  height: 100%;
-  //overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
 #container {
@@ -252,11 +275,23 @@ onMounted(async () => {
   }
 }
 
-.ant-card {
-  border-color: #555;
-  background-color: #242424;
-  color: white;
+.bottom {
+  .info {
+    margin-bottom: 5px;
+    >span {
+      float: left;
+      &:first-child {
+        margin-right: 10px;
+      }
+    }
+  }
+
+  .tip {
+    max-height: 100px;
+    overflow-y: auto;
+  }
 }
+
 
 :deep {
   .ant-card-body {
@@ -269,6 +304,4 @@ onMounted(async () => {
     border-color: #555;
   }
 }
-
-
 </style>
