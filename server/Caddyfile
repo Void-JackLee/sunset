@@ -1,16 +1,29 @@
-{
-    auto_https disable_redirects
-}
+# {
+#     auto_https disable_redirects
+# }
 
-bsres.cn:9180 {
-
-    tls /root/key/bsres.cn.pem /root/key/bsres.cn.key {
-        ciphers TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
-        alpn h2 http/1.1
+:80 {
+    handle_path /* {
+        root * /root/html/
+        file_server
+        try_files {path} /
     }
 
+    handle_path /api/* {
+         rewrite * /api{path}
+         reverse_proxy localhost:8190
+    }
+}
+
+:9180 {
+
+    # tls /root/key/bsres.cn.pem /root/key/bsres.cn.key {
+    #     ciphers TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+    #     alpn h2 http/1.1
+    # }
+
     handle_path /sunset/* {
-        root * /root/nginx/html/sunset
+        root * /root/html/
         file_server
         try_files {path} /
     }

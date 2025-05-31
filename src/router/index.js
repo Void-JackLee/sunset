@@ -3,6 +3,8 @@ import Home from "../page/Home.vue";
 import Windy from "../page/Windy.vue";
 import WindyIframe from "../components/WindyIframe.vue";
 
+const BASE = import.meta.env.BASE_URL;
+
 const routes = [
     {
         path: '/',
@@ -20,14 +22,14 @@ const routes = [
         ]
     },
     {
-        path: '/windy_iframe',
+        path: BASE.indexOf('sunset') === -1 ? '/sunset/windy_iframe' : '/windy_iframe',
         name: 'WindyIframe',
         component: WindyIframe,
     }
 ]
 
 const router = createRouter({
-    history: createWebHistory(import.meta.env.BASE_URL),
+    history: createWebHistory(BASE),
     routes
 });
 
