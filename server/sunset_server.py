@@ -75,7 +75,7 @@ def getSunrisePolyLine(lat,lng,time=None):
 def getSunPosition(lat,lng,timezone=8):
     time = datetime.now().astimezone(tz(timedelta(hours=timezone)))
     deg_dir, deg_height = get_sun_deg(lat,lng,time)
-    target_lat, target_lng, _ = distance(kilometers=400).destination((lat,lng),bearing=deg_dir * 180 / math.pi)
+    target_lat, target_lng, _ = distance(kilometers=600).destination((lat,lng),bearing=deg_dir * 180 / math.pi)
     data = [
         [lat,lng], # 原点
         [target_lat, target_lng]
