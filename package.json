@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --mode dev",
     "build": "vite build",
+    "caddy": "caddy run",
     "preview": "vite preview"
   },
   "dependencies": {
