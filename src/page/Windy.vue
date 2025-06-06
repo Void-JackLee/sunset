@@ -10,30 +10,24 @@ const domain = window.location.hostname
 const loadMap = ref(false)
 const lat = ref(30.261)
 const lng = ref(120.117)
+const lat_init = ref(30.261)
+const lng_init = ref(120.117)
 const lineData = ref({})
 
 const type = ref("sunset")
 const overlay = ref("satellite")
 const product = ref("ecmwf")
 const date = ref(dayjs())
+const pickerPos = ref(null) // { lat: number, lon: number }
+let sunLineTimer = null
 
 const getFuncString = (func) => {
   return func.toString() + "\n" + func.name;
 }
 
-const getSunset = async () => {
-  const res = await getJSON(`api/getSunsetTime?lat=${lat.value}&lng=${lng.value}&time=${date.value.valueOf()}`);
-  lineData.value = res.data;
-}
-
-const getSunrise = async () => {
-  const res = await getJSON(`api/getSunriseTime?lat=${lat.value}&lng=${lng.value}&time=${date.value.valueOf()}`);
-  lineData.value = res.data;
-}
-
 const setLineAndMarker = (val) => {
   const data = JSON.parse(JSON.stringify(val))
-  function move(data, L, map) {
+  function sunsetSunriseLine(data, L, map) {
     const init = (lineData, markerData) => {
       const srcDotIcon = L.divIcon({ html: '<div style="width: 15px;height: 15px;border-radius: 7.5px;background: #7553f2"></div>' });
       const midDotIcon = L.divIcon({ html: '<div style="width: 10px;height: 10px;border-radius: 5px;background: #17aa03"></div>' });
@@ -94,11 +88,52 @@ const setLineAndMarker = (val) => {
 
   windy.value.contentWindow.postMessage({
     type: 'run',
+    name: sunsetSunriseLine.name,
+    func: getFuncString(sunsetSunriseLine),
+    data: data
+  },'*')
+}
+
+const drawSunLine = (val) => {
+  const data = JSON.parse(JSON.stringify(val))
+  function move(data, L, map) {
+    const init = () => {
+      window.sunLine = L.polyline(data, {color: '#ffffff', weight: 2});
+      window.sunLine.addTo(map)
+    }
+
+    if (!window.sunLine) {
+      init()
+    } else {
+      window.sunLine.setLatLngs(data)
+    }
+  }
+
+  windy.value.contentWindow.postMessage({
+    type: 'run',
     name: move.name,
     func: getFuncString(move),
     data: data
   },'*')
 }
+
+// ----- get api -----
+const getSunset = async () => {
+  const res = await getJSON(`api/getSunsetTime?lat=${lat.value}&lng=${lng.value}&time=${date.value.valueOf()}`);
+  lineData.value = res.data;
+}
+
+const getSunrise = async () => {
+  const res = await getJSON(`api/getSunriseTime?lat=${lat.value}&lng=${lng.value}&time=${date.value.valueOf()}`);
+  lineData.value = res.data;
+}
+
+const getSunPos = async () => {
+  const res = await getJSON(`api/getSunPos?lat=${lat.value}&lng=${lng.value}`);
+  drawSunLine(res.data)
+}
+
+// ----- attribute change -----
 
 const changeType = async () => {
   if (type.value === 'sunset') {
@@ -152,10 +187,48 @@ const changeDate = () => {
   }
 }
 
-// ----- 初始化 Start -----
+const changePos = async () => {
+  lat.value = pickerPos.value.lat
+  lng.value = pickerPos.value.lon
+  await changeType()
+  await getSunPos()
+  windy.value.contentWindow.postMessage({
+    type: 'pickerPos',
+    pos: null
+  },'*')
+}
+
+// ----- set listener ------
+const setPositionListener = () => {
+  function setPickerListener(data, L, map, W) {
+    W.store.on('pickerLocation',pos => {
+      window.parent.postMessage({ type: 'pickerPos', pos },'*')
+    })
+    window.addEventListener("message",e => {
+      if (e.data.type === 'pickerPos') {
+        W.store.set('pickerLocation',e.data.pos)
+      }
+    })
+  }
+  windy.value.contentWindow.postMessage({
+    type: 'run',
+    name: setPickerListener.name,
+    func: getFuncString(setPickerListener)
+  },'*')
+  window.addEventListener("message",e => {
+    if (e.data.type === 'pickerPos') {
+      pickerPos.value = e.data.pos
+    }
+  })
+}
+
+// ----- 初始化 -----
 const init = () => {
   try {
     setLineAndMarker(lineData.value)
+    setPositionListener()
+    sunLineTimer = setInterval(getSunPos,5000)
+    getSunPos()
   } catch (e) {
     message.error(e)
   }
@@ -167,7 +240,7 @@ onMounted(async () => {
       await getSunset()
       loadMap.value = true
       window.addEventListener("message",e => {
-        if (e.data === 'doneLoad') {
+        if (e.data.type === 'doneLoad') {
           init()
         }
       })
@@ -179,6 +252,8 @@ onMounted(async () => {
   navigator.geolocation.getCurrentPosition(async position => {
     lat.value = position.coords.latitude
     lng.value = position.coords.longitude
+    lat_init.value = position.coords.latitude
+    lng_init.value = position.coords.longitude
     load()
   }, async err => {
     console.log('using default')
@@ -222,11 +297,11 @@ onMounted(async () => {
     </a-card>
   </div>
   <div id="container">
-    <iframe v-if="loadMap" ref="windy" id="windy" :src="`//${domain}:9180/sunset/windy_iframe?lat=${lat}&lon=${lng}`" frameborder="0"></iframe>
+    <iframe v-if="loadMap" ref="windy" id="windy" :src="`//${domain}:9180/sunset/windy_iframe?lat=${lat_init}&lon=${lng_init}`" frameborder="0"></iframe>
   </div>
   <div class="content bottom">
     <div class="info">
-      <span><b>经纬度:</b> {{lat}}, {{lng}}</span>
+      <span><b>经纬度:</b> {{lat}}, {{lng}} <a class="link-btn" v-if="pickerPos != null" @click="changePos">修改位置</a></span>
       <span><b>{{ type === 'sunset' ? '落日' : '日出' }}时间:</b> {{ lineData.time }}</span>
     </div>
     <div class="divider"></div>
@@ -236,6 +311,12 @@ onMounted(async () => {
 </template>
 
 <style lang="scss" scoped>
+.link-btn {
+  text-decoration: underline;
+  cursor: pointer;
+  user-select: none;
+}
+
 #windy-container {
   height: 100%;
   //overflow: hidden;

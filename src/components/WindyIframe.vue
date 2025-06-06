@@ -23,7 +23,7 @@ const lon = ref(getAttr('lon'))
 const marker = ref(getAttr('marker'))
 
 const init = async () => {
-  window.parent.postMessage('doneLoad','*')
+  window.parent.postMessage({ type: 'doneLoad' },'*')
 }
 </script>
 

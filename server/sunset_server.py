@@ -1,11 +1,12 @@
 from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException, Form
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone as tz
 from geopy.distance import distance
+from typing import Union
 import time
 import math
 
-from src.degree import get_sunset, get_sunrise
+from src.degree import get_sunset, get_sunrise, get_sun_deg
 
 def getSunsetPolyLine(lat,lng,time=None):
     time_sunset,deg_dir,deg_height = get_sunset(lat,lng,time)
@@ -71,9 +72,20 @@ def getSunrisePolyLine(lat,lng,time=None):
     }
     return data
 
+def getSunPosition(lat,lng,timezone=8):
+    time = datetime.now().astimezone(tz(timedelta(hours=timezone)))
+    deg_dir, deg_height = get_sun_deg(lat,lng,time)
+    target_lat, target_lng, _ = distance(kilometers=400).destination((lat,lng),bearing=deg_dir * 180 / math.pi)
+    data = [
+        [lat,lng], # 原点
+        [target_lat, target_lng]
+    ]
+    return data
+
+
 class ResultJson(BaseModel):
     msg: str = 'ok'
-    data: dict = None
+    data: Union[dict, list] = None
     status: int = 200
     timestamp: int
 
@@ -94,3 +106,7 @@ async def getSunsetTime(lat: float, lng: float, time: int):
 @app.get("/api/getSunriseTime")
 async def getSunriseTime(lat: float, lng: float, time: int):
     return ok(getSunrisePolyLine(lat, lng, datetime.fromtimestamp(time / 1000).strftime('%Y%m%d')))
+
+@app.get("/api/getSunPos")
+async def getSunriseTime(lat: float, lng: float):
+    return ok(getSunPosition(lat, lng))
