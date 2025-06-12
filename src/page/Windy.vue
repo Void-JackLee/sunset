@@ -251,16 +251,26 @@ onMounted(async () => {
     }
   }
   // 1. 获取位置信息
-  navigator.geolocation.getCurrentPosition(async position => {
-    lat.value = position.coords.latitude
-    lng.value = position.coords.longitude
-    lat_init.value = position.coords.latitude
-    lng_init.value = position.coords.longitude
+  try {
+    navigator.geolocation.getCurrentPosition(async position => {
+      try {
+        lat.value = position.coords.latitude
+        lng.value = position.coords.longitude
+        lat_init.value = position.coords.latitude
+        lng_init.value = position.coords.longitude
+        load()
+      } catch (e) {
+        message.warning('使用默认位置')
+        load()
+      }
+    }, async err => {
+      message.warning('使用默认位置')
+      load()
+    })
+  } catch (e) {
+    message.warning('使用默认位置')
     load()
-  }, async err => {
-    console.log('using default')
-    load()
-  })
+  }
 })
 // ----- 初始化 End -----
 </script>
