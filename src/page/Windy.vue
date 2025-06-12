@@ -5,6 +5,8 @@ import {getJSON} from "../util/request.js";
 import dayjs from 'dayjs';
 
 const windy = ref()
+const openTip = ref(false)
+const showBottom = ref(true)
 
 const domain = window.location.hostname
 const loadMap = ref(false)
@@ -299,14 +301,40 @@ onMounted(async () => {
   <div id="container">
     <iframe v-if="loadMap" ref="windy" id="windy" :src="`//${domain}:9180/sunset/windy_iframe?lat=${lat_init}&lon=${lng_init}`" frameborder="0"></iframe>
   </div>
-  <div class="content bottom">
-    <div class="info">
-      <span><b>经纬度:</b> {{lat}}, {{lng}} <a class="link-btn" v-if="pickerPos != null" @click="changePos">修改位置</a></span>
-      <span><b>{{ type === 'sunset' ? '落日' : '日出' }}时间:</b> {{ lineData.time }}</span>
+  <div class="content bottom" ref="bottom">
+    <div class="hide-button" @click="showBottom = !showBottom">{{showBottom ? '收缩' : '展开'}}</div>
+    <div v-show="showBottom" class="info">
+      <span class="pos-span"><b>经纬度:&nbsp;</b>{{lat}}, {{lng}}<button v-if="pickerPos != null" @click="changePos">修改位置</button></span>
+      <div class="pos-table">
+        <div>
+          <div><b>经度：</b>{{lat}}</div>
+          <div><b>纬度：</b>{{lng}}</div>
+        </div>
+        <div><button v-if="pickerPos != null" @click="changePos">修改位置</button></div>
+      </div>
+      <span class="clear"></span>
+      <span><b>{{ type === 'sunset' ? '落日' : '日出' }}时间:&nbsp;</b>{{ lineData.time }}</span>
     </div>
-    <div class="divider"></div>
-    <div class="tip">说明：<span style="color: #ff5900">浅橙色</span>代表太阳落日前30分钟线，<span style="color: #ff2400">橙色</span>代表落日线，<span style="color: #cc0000">暗红色</span>代表太阳落日后30分钟线；<span style="color: #7553f2;">紫色点</span>代表您的位置，<span style="color: #17aa03;">绿色点</span>代表距离您200km处，<span style="color: #318bff;">蓝色点</span>代表距离您400km处。一般而言，<b><span style="color: #7553f2;">紫色点</span>和<span style="color: #17aa03;">绿色点</span>之间有云，<span style="color: #17aa03;">绿色点</span>和<span style="color: #318bff;">蓝色点</span>之间没有云，说明有<span style="color: #ff2400">晚霞</span>。</b>如果<span style="color: #7553f2;">紫色点</span>和<span style="color: #17aa03;">绿色点</span>之间的云太厚了，那么无云空间需要离您更近才可能会烧。</div>
+    <div v-show="showBottom" class="tip">
+      <div class="divider"></div>
+      <div>说明：<span style="color: #ff5900">浅橙色</span>代表太阳落日前30分钟线，<span style="color: #ff2400">橙色</span>代表落日线，<span style="color: #cc0000">暗红色</span>代表太阳落日后30分钟线；<span style="color: #7553f2;">紫色点</span>代表您的位置，<span style="color: #17aa03;">绿色点</span>代表距离您200km处，<span style="color: #318bff;">蓝色点</span>代表距离您400km处。一般而言，<b><span style="color: #7553f2;">紫色点</span>和<span style="color: #17aa03;">绿色点</span>之间有云，<span style="color: #17aa03;">绿色点</span>和<span style="color: #318bff;">蓝色点</span>之间没有云，说明有<span style="color: #ff2400">晚霞</span>。</b>如果<span style="color: #7553f2;">紫色点</span>和<span style="color: #17aa03;">绿色点</span>之间的云太厚了，那么无云空间需要离您更近才可能会烧。</div>
+    </div>
+    <div v-show="showBottom" class="tip-expand">
+      <div @click="openTip = true">展开说明</div>
+    </div>
   </div>
+  <a-drawer
+      v-model:open="openTip"
+      :style="{
+        'background': '#000'
+      }"
+      :closable="false"
+      placement="bottom"
+      height="150"
+      @after-open-change="afterOpenChange"
+  >
+    <div>说明：<span style="color: #ff5900">浅橙色</span>代表太阳落日前30分钟线，<span style="color: #ff2400">橙色</span>代表落日线，<span style="color: #cc0000">暗红色</span>代表太阳落日后30分钟线；<span style="color: #7553f2;">紫色点</span>代表您的位置，<span style="color: #17aa03;">绿色点</span>代表距离您200km处，<span style="color: #318bff;">蓝色点</span>代表距离您400km处。一般而言，<b><span style="color: #7553f2;">紫色点</span>和<span style="color: #17aa03;">绿色点</span>之间有云，<span style="color: #17aa03;">绿色点</span>和<span style="color: #318bff;">蓝色点</span>之间没有云，说明有<span style="color: #ff2400">晚霞</span>。</b>如果<span style="color: #7553f2;">紫色点</span>和<span style="color: #17aa03;">绿色点</span>之间的云太厚了，那么无云空间需要离您更近才可能会烧。</div>
+  </a-drawer>
 </div>
 </template>
 
@@ -378,20 +406,107 @@ onMounted(async () => {
 }
 
 .bottom {
+  position: relative;
   padding-bottom: 5px !important;
+  .hide-button {
+    padding: 5px 7px;
+    border-radius: 0 0 5px 5px;
+    opacity: 0.7;
+    background: #3c3c3c;
+    color: white;
+    position: absolute;
+    right: 0;
+    top: 0;
+    font-size: 12px;
+    cursor: pointer;
+    z-index: 1000;
+  }
   .info {
     margin-bottom: 5px;
+    .pos-table {
+      display: none;
+      margin-bottom: 5px;
+      >div:last-child {
+        padding: 3px 10px;
+        button {
+          background: #646cff;
+          color: white;
+          padding: 0 10px;
+          height: 100%;
+          transition: 0.3s all;
+          &:hover {
+            background: #7880f4;
+          }
+        }
+      }
+      @media screen and (max-width: 485px) {
+        display: flex;
+      }
+    }
     >span {
       float: left;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      &.clear {
+        @media screen and (max-width: 847px) {
+          clear: both;
+        }
+      }
       &:first-child {
         margin-right: 10px;
+        @media screen and (max-width: 485px) {
+          display: none;
+        }
+      }
+      button {
+        text-align: center;
+        font-size: 0.7em;
+        line-height: 24px;
+        margin-left: 10px;
+        height: 24px;
+        background: #646cff;
+        color: white;
+        padding: 0 10px;
+        transition: 0.3s all;
+        &:hover {
+          background: #7880f4;
+        }
       }
     }
   }
 
   .tip {
+    clear: both;
     max-height: 100px;
     overflow-y: auto;
+    @media screen and (max-width: 422px) {
+      display: none;
+    }
+    @media screen and (max-height: 750px) {
+      display: none;
+    }
+  }
+  .tip-expand {
+    padding-top: 5px;
+    display: none;
+    clear: both;
+    >div {
+      text-align: center;
+      background: #1677ff;
+      transition: 0.3s all;
+      &:active {
+        background: #4f98ff;
+      }
+      color: white;
+      cursor: pointer;
+    }
+    @media screen and (max-width: 422px) {
+      display: block;
+    }
+    @media screen and (max-height: 750px) {
+      display: block;
+    }
   }
 }
 
