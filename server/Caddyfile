@@ -2,7 +2,12 @@
 #     auto_https disable_redirects
 # }
 
-:80 {
+{
+    email 1071426378@163.com
+}
+
+#:80 {
+sunsetting.cn {
     handle_path /* {
         root * /root/html/
         file_server
@@ -15,7 +20,7 @@
     }
 }
 
-:9180 {
+sunsetting.cn:9180 {
 
     # tls /root/key/bsres.cn.pem /root/key/bsres.cn.key {
     #     ciphers TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
