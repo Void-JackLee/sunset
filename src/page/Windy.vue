@@ -299,6 +299,7 @@ onMounted(async () => {
           <a-radio-group v-model:value="product" button-style="solid" @change="changeProduct">
             <a-radio-button value="ecmwf">ecm</a-radio-button>
             <a-radio-button value="gfs">gfs</a-radio-button>
+            <a-radio-button value="icon">icon</a-radio-button>
           </a-radio-group>
         </span>
       </div>
@@ -488,9 +489,11 @@ onMounted(async () => {
 
   .tip {
     clear: both;
-    max-height: 100px;
-    overflow-y: auto;
-    @media screen and (max-width: 422px) {
+    >div:last-child {
+      max-height: 100px;
+      overflow-y: auto;
+    }
+    @media screen and (max-width: 499px) {
       display: none;
     }
     @media screen and (max-height: 750px) {
@@ -511,7 +514,7 @@ onMounted(async () => {
       color: white;
       cursor: pointer;
     }
-    @media screen and (max-width: 422px) {
+    @media screen and (max-width: 499px) {
       display: block;
     }
     @media screen and (max-height: 750px) {
