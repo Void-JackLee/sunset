@@ -21,7 +21,7 @@ const overlay = ref("satellite")
 const product = ref("ecmwf")
 const date = ref(dayjs())
 const pickerPos = ref(null) // { lat: number, lon: number }
-let sunLineTimer = null
+const city = ref(null)
 
 const getFuncString = (func) => {
   return func.toString() + "\n" + func.name;
@@ -135,6 +135,16 @@ const getSunPos = async () => {
   drawSunLine(res.data)
 }
 
+const getCityPos = async () => {
+  try {
+    const res = await getJSON(`api/getLocation?loc=${city.value}`);
+    moveCenter(res.data.lat, res.data.lng)
+    changePos(res.data.lat, res.data.lng)
+  } catch (err) {
+    message.error(err.msg);
+  }
+}
+
 // ----- attribute change -----
 
 const changeType = async () => {
@@ -189,14 +199,32 @@ const changeDate = () => {
   }
 }
 
-const changePos = async () => {
-  lat.value = pickerPos.value.lat
-  lng.value = pickerPos.value.lon
+const changePos = async (_lat = undefined, _lng = undefined) => {
+  if (_lat === undefined || _lng === undefined) {
+    lat.value = pickerPos.value.lat
+    lng.value = pickerPos.value.lon
+  } else {
+    lat.value = _lat
+    lng.value = _lng
+  }
+
   await changeType()
   await getSunPos()
   windy.value.contentWindow.postMessage({
     type: 'pickerPos',
     pos: null
+  },'*')
+}
+
+const moveCenter = async (lat, lng) => {
+  function setCenter(data, L, map, W) {
+    map.panTo([data.lat, data.lng])
+  }
+  windy.value.contentWindow.postMessage({
+    type: 'run',
+    name: setCenter.name,
+    func: getFuncString(setCenter),
+    data: { lat, lng }
   },'*')
 }
 
@@ -229,7 +257,7 @@ const init = () => {
   try {
     setLineAndMarker(lineData.value)
     setPositionListener()
-    sunLineTimer = setInterval(getSunPos,5000)
+    setInterval(getSunPos,5000)
     getSunPos()
   } catch (e) {
     message.error(e)
@@ -304,8 +332,20 @@ onMounted(async () => {
         </span>
       </div>
       <div class="vcenter">
-        <span class="item">通道时间: </span>
-        <a-date-picker v-model:value="date" @change="changeDate"/>
+        <span class="item">
+          <span>时间: </span>
+          <a-date-picker v-model:value="date" @change="changeDate"/>
+        </span>
+        <span class="item">
+          <span>位置: </span>
+          <a-input-search
+              v-model:value="city"
+              placeholder="请输入城市"
+              enter-button
+              @search="getCityPos"
+          />
+        </span>
+
       </div>
     </a-card>
   </div>
@@ -533,6 +573,19 @@ onMounted(async () => {
     background: transparent;
     color: white;
     border-color: #555;
+  }
+
+  .ant-input-search {
+    width: auto;
+    vertical-align: middle;
+    input {
+      color: white;
+      background: #242424;
+      border-color: #555;
+      &::placeholder {
+        color: #FFFFFF99;
+      }
+    }
   }
 
   .ant-picker-input {
