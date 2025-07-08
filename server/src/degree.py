@@ -2,6 +2,8 @@ from astral import Observer,sun,moon
 from datetime import datetime, timedelta, timezone as tz
 import math
 
+R = 6371.393 # 地球半径，单位km
+
 def get_sunset(lat, lng, time = None, delta = timedelta(),timezone = 8):
     if time == None:
         time = datetime.now()
@@ -60,3 +62,6 @@ def get_sun_deg(lat,lng,time):
 def get_moon_deg(lat,lng,time):
     loc = Observer(latitude = lat,longitude = lng)
     return get_deg(loc, time, moon)
+
+def get_boundary(cloud_height): # km
+    return math.acos(R / (R + cloud_height)) * R

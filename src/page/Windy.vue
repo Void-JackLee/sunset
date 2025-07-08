@@ -3,6 +3,7 @@ import {computed, onMounted, ref} from "vue";
 import {message} from "ant-design-vue";
 import {getJSON} from "../util/request.js";
 import dayjs from 'dayjs';
+import {round} from "lodash-es";
 
 const windy = ref()
 const openTip = ref(false)
@@ -22,6 +23,13 @@ const product = ref("ecmwf")
 const date = ref(dayjs())
 const pickerPos = ref(null) // { lat: number, lon: number }
 const city = ref(null)
+
+
+const _cloudHeight = ref(3150)
+const confirmLoading = ref(false);
+const cloudHeight = ref(3150)
+const showCloudHeight = ref(false)
+const boundary = ref(400)
 
 const getFuncString = (func) => {
   return func.toString() + "\n" + func.name;
@@ -121,13 +129,15 @@ const drawSunLine = (val) => {
 
 // ----- get api -----
 const getSunset = async () => {
-  const res = await getJSON(`api/getSunsetTime?lat=${lat.value}&lng=${lng.value}&time=${date.value.valueOf()}`);
+  const res = await getJSON(`api/getSunsetTime?lat=${lat.value}&lng=${lng.value}&time=${date.value.valueOf()}&hc=${cloudHeight.value / 1000}`);
   lineData.value = res.data;
+  boundary.value = Math.round(res.data.boundary);
 }
 
 const getSunrise = async () => {
-  const res = await getJSON(`api/getSunriseTime?lat=${lat.value}&lng=${lng.value}&time=${date.value.valueOf()}`);
+  const res = await getJSON(`api/getSunriseTime?lat=${lat.value}&lng=${lng.value}&time=${date.value.valueOf()}&hc=${cloudHeight.value / 1000}`);
   lineData.value = res.data;
+  boundary.value = Math.round(res.data.boundary);
 }
 
 const getSunPos = async () => {
@@ -214,6 +224,14 @@ const changePos = async (_lat = undefined, _lng = undefined) => {
     type: 'pickerPos',
     pos: null
   },'*')
+}
+
+const changeCloudHeight = async () => {
+  confirmLoading.value = true
+  cloudHeight.value = _cloudHeight.value;
+  await changeType();
+  confirmLoading.value = false
+  showCloudHeight.value = false
 }
 
 const moveCenter = async (lat, lng) => {
@@ -345,7 +363,12 @@ onMounted(async () => {
               @search="getCityPos"
           />
         </span>
-
+      </div>
+      <div class="vcenter">
+        <span class="item">
+          <span>云底高度：{{ cloudHeight / 1000 }} km</span>&nbsp;
+          <a-button ghost @click="showCloudHeight = true;_cloudHeight = cloudHeight">修改</a-button>
+        </span>
       </div>
     </a-card>
   </div>
@@ -368,11 +391,40 @@ onMounted(async () => {
     </div>
     <div v-show="showBottom" class="tip">
       <div class="divider"></div>
-      <div>说明：<span style="color: #ff5900">浅橙色</span>代表太阳落日前30分钟线，<span style="color: #ff2400">橙色</span>代表落日线，<span style="color: #cc0000">暗红色</span>代表太阳落日后30分钟线；<span style="color: #7553f2;">紫色点</span>代表您的位置，<span style="color: #17aa03;">绿色点</span>代表距离您200km处，<span style="color: #318bff;">蓝色点</span>代表距离您400km处。一般而言，<b><span style="color: #7553f2;">紫色点</span>和<span style="color: #17aa03;">绿色点</span>之间有云，<span style="color: #17aa03;">绿色点</span>和<span style="color: #318bff;">蓝色点</span>之间没有云，说明有<span style="color: #ff2400">晚霞</span>。</b>如果<span style="color: #7553f2;">紫色点</span>和<span style="color: #17aa03;">绿色点</span>之间的云太厚了，那么无云空间需要离您更近才可能会烧。</div>
+      <div>说明：<span style="color: #ff5900">浅橙色</span>代表太阳落日前30分钟线，<span style="color: #ff2400">橙色</span>代表落日线，<span style="color: #cc0000">暗红色</span>代表太阳落日后30分钟线；<span style="color: #7553f2;">紫色点</span>代表您的位置，<span style="color: #17aa03;">绿色点</span>代表距离您<b>{{boundary}}km</b>处，<span style="color: #318bff;">蓝色点</span>代表距离您<b>{{boundary*2}}km</b>处。一般而言，<b><span style="color: #7553f2;">紫色点</span>和<span style="color: #17aa03;">绿色点</span>之间有云，<span style="color: #17aa03;">绿色点</span>和<span style="color: #318bff;">蓝色点</span>之间没有云，说明有<span style="color: #ff2400">晚霞</span>。</b>如果<span style="color: #7553f2;">紫色点</span>和<span style="color: #17aa03;">绿色点</span>之间的云太厚了，那么无云空间需要离您更近才可能会烧。</div>
     </div>
     <div v-show="showBottom" class="tip-expand">
       <div @click="openTip = true">展开说明</div>
     </div>
+    <a-modal v-model:open="showCloudHeight"
+             title="云底高度"
+             ok-text="确定"
+             cancel-text="取消"
+             @ok="changeCloudHeight"
+             :confirm-loading="confirmLoading">
+      <div style="display: flex;">
+        <a-slider v-model:value="_cloudHeight" :min="1000" :max="10000" :step="50" style="flex: 1;margin-left: 0"/>
+        <div style="display: flex;align-items: center;margin-left: 5px">
+          <a-input-number
+            v-model:value="_cloudHeight"
+            :min="1000"
+            :max="10000"
+            :step="50"/>
+          <div>&nbsp;km</div>
+        </div>
+      </div>
+      <div style="margin-top: 12px">
+        <template v-if="_cloudHeight <= 2500">
+          <b>低云</b>：很难形成火烧云，入射光线距离比较近。
+        </template>
+        <template v-else-if="_cloudHeight <= 6000">
+          <b>中云</b>：能形成很猛烈的火烧云，大烧云基本都是由它组成。
+        </template>
+        <template v-else>
+          <b>高云</b>：能形成比较温柔的火烧云，云比较高，如果远端没有云，烧的持续时间往往也比较久。
+        </template>
+      </div>
+    </a-modal>
   </div>
   <a-drawer
       v-model:open="openTip"
@@ -384,7 +436,7 @@ onMounted(async () => {
       height="150"
       @after-open-change="afterOpenChange"
   >
-    <div>说明：<span style="color: #ff5900">浅橙色</span>代表太阳落日前30分钟线，<span style="color: #ff2400">橙色</span>代表落日线，<span style="color: #cc0000">暗红色</span>代表太阳落日后30分钟线；<span style="color: #7553f2;">紫色点</span>代表您的位置，<span style="color: #17aa03;">绿色点</span>代表距离您200km处，<span style="color: #318bff;">蓝色点</span>代表距离您400km处。一般而言，<b><span style="color: #7553f2;">紫色点</span>和<span style="color: #17aa03;">绿色点</span>之间有云，<span style="color: #17aa03;">绿色点</span>和<span style="color: #318bff;">蓝色点</span>之间没有云，说明有<span style="color: #ff2400">晚霞</span>。</b>如果<span style="color: #7553f2;">紫色点</span>和<span style="color: #17aa03;">绿色点</span>之间的云太厚了，那么无云空间需要离您更近才可能会烧。</div>
+    <div>说明：<span style="color: #ff5900">浅橙色</span>代表太阳落日前30分钟线，<span style="color: #ff2400">橙色</span>代表落日线，<span style="color: #cc0000">暗红色</span>代表太阳落日后30分钟线；<span style="color: #7553f2;">紫色点</span>代表您的位置，<span style="color: #17aa03;">绿色点</span>代表距离您<b>{{boundary}}km</b>处，<span style="color: #318bff;">蓝色点</span>代表距离您<b>{{boundary*2}}km</b>处。一般而言，<b><span style="color: #7553f2;">紫色点</span>和<span style="color: #17aa03;">绿色点</span>之间有云，<span style="color: #17aa03;">绿色点</span>和<span style="color: #318bff;">蓝色点</span>之间没有云，说明有<span style="color: #ff2400">晚霞</span>。</b>如果<span style="color: #7553f2;">紫色点</span>和<span style="color: #17aa03;">绿色点</span>之间的云太厚了，那么无云空间需要离您更近才可能会烧。</div>
   </a-drawer>
 </div>
 </template>
@@ -569,7 +621,7 @@ onMounted(async () => {
     padding: 5px 10px !important;
   }
 
-  .ant-radio-button-wrapper {
+  .ant-radio-button-wrapper,.ant-btn-background-ghost {
     background: transparent;
     color: white;
     border-color: #555;
