@@ -381,8 +381,8 @@ onMounted(async () => {
       <span class="pos-span"><b>经纬度:&nbsp;</b>{{lat}}, {{lng}}<button v-if="pickerPos != null" @click="changePos">修改位置</button></span>
       <div class="pos-table">
         <div>
-          <div><b>经度：</b>{{lat}}</div>
-          <div><b>纬度：</b>{{lng}}</div>
+          <div><b>经度：</b>{{lng}}</div>
+          <div><b>纬度：</b>{{lat}}</div>
         </div>
         <div><button v-if="pickerPos != null" @click="changePos">修改位置</button></div>
       </div>
@@ -410,7 +410,7 @@ onMounted(async () => {
             :min="1000"
             :max="10000"
             :step="50"/>
-          <div>&nbsp;km</div>
+          <div>&nbsp;m</div>
         </div>
       </div>
       <div style="margin-top: 12px">
