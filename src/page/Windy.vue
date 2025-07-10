@@ -627,6 +627,44 @@ onMounted(async () => {
     border-color: #555;
   }
 
+  .ant-radio-button-wrapper {
+    @media screen and (max-width: 499px) {
+      padding-inline: 13px;
+    }
+
+    @media screen and (max-width: 471px) {
+      padding-inline: 10px;
+    }
+
+    @media screen and (max-width: 428px) {
+      padding-inline: 8px;
+    }
+
+    @media screen and (max-width: 399px) {
+      padding-inline: 7px;
+    }
+
+    @media screen and (max-width: 384px) {
+      padding-inline: 6px;
+    }
+
+    @media screen and (max-width: 370px) {
+      padding-inline: 5px;
+    }
+
+    @media screen and (max-width: 355px) {
+      padding-inline: 4px;
+    }
+
+    @media screen and (max-width: 340px) {
+      padding-inline: 3px;
+    }
+
+    @media screen and (max-width: 326px) {
+      padding-inline: 2px;
+    }
+  }
+
   .ant-input-search {
     width: auto;
     vertical-align: middle;
