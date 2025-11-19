@@ -1,12 +1,12 @@
 {
   "name": "sunset",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite --mode dev",
     "build": "vite build",
-    "caddy": "caddy run",
+    "caddy": "export http_proxy=127.0.0.1:1087;export https_proxy=$http_proxy && caddy run",
     "preview": "vite preview"
   },
   "dependencies": {
