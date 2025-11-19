@@ -4,6 +4,7 @@ import {message} from "ant-design-vue";
 import {getJSON} from "../util/request.js";
 import dayjs from 'dayjs';
 import {round} from "lodash-es";
+import WindyTip from "../components/WindyTip.vue";
 
 const windy = ref()
 const openTip = ref(false)
@@ -17,13 +18,13 @@ const lat_init = ref(30.261)
 const lng_init = ref(120.117)
 const lineData = ref({})
 
+const mode = ref('sun')
 const type = ref("sunset")
 const overlay = ref("satellite")
 const product = ref("ecmwf")
 const date = ref(dayjs())
 const pickerPos = ref(null) // { lat: number, lon: number }
 const city = ref(null)
-
 
 const _cloudHeight = ref(3150)
 const confirmLoading = ref(false);
@@ -96,26 +97,121 @@ const setLineAndMarker = (val) => {
     }
   }
 
-  windy.value.contentWindow.postMessage({
-    type: 'run',
-    name: sunsetSunriseLine.name,
-    func: getFuncString(sunsetSunriseLine),
-    data: data
-  },'*')
+  function moonsetMoonriseLine(data, L, map) {
+    const init = (lineData, markerData) => {
+      const srcDotIcon = L.divIcon({ html: '<div style="width: 15px;height: 15px;border-radius: 7.5px;background: #7553f2"></div>' });
+      const midDotIcon = L.divIcon({ html: '<div style="width: 10px;height: 10px;border-radius: 5px;background: #17aa03"></div>' });
+      const lines = [
+        L.polyline(lineData[0], {color: '#ff2400', weight: 2}),
+        L.polyline(lineData[1], {color: '#ff5900', weight: 2}),
+        L.polyline(lineData[2], {color: '#cc0000', weight: 2}),
+      ]
+      const markers = [
+        L.marker(markerData[0], { icon: srcDotIcon }),
+        L.marker(markerData[1], { icon: midDotIcon }),
+        L.marker(markerData[2], { icon: midDotIcon }),
+        L.marker(markerData[3], { icon: midDotIcon }),
+      ]
+      window.lines = lines
+      window.markers = markers
+      for (const line of lines) {
+        line.addTo(map)
+      }
+      for (const marker of markers) {
+        marker.addTo(map)
+      }
+    }
+
+    const lineData = [
+      data['target'], data['before30'], data['after30']
+    ]
+
+    const markerData = [
+      data['target'][0],
+      data['before30'][1],
+      data['target'][1],
+      data['after30'][1],
+    ]
+
+    if (!window.lines || !window.markers) {
+      init(lineData, markerData)
+    } else {
+      const lines = window.lines
+      const markers = window.markers
+
+      for (const i in lineData) {
+        lines[i].setLatLngs(lineData[i])
+      }
+
+      for (const i in markerData) {
+        markers[i].setLatLng(markerData[i])
+      }
+      if (markers[4]) {
+        for (let i = 4;i < 7;i ++) {
+          markers[i].setLatLng(markerData[i-3])
+        }
+      }
+    }
+  }
+
+  function clearLines(data, L, map) {
+    const lines = window.lines
+    const markers = window.markers
+
+    if (lines) {
+      for (const i in lines) {
+        lines[i].remove()
+      }
+      window.lines = undefined
+    }
+
+    if (markers) {
+      for (const i in markers) {
+        markers[i].remove()
+      }
+      window.markers = undefined
+    }
+  }
+
+  if (data['clear']) {
+    windy.value.contentWindow.postMessage({
+      type: 'run',
+      name: clearLines.name,
+      func: getFuncString(clearLines),
+      data: data
+    },'*')
+  } else {
+    if (mode.value === 'sun') {
+      windy.value.contentWindow.postMessage({
+        type: 'run',
+        name: sunsetSunriseLine.name,
+        func: getFuncString(sunsetSunriseLine),
+        data: data
+      },'*')
+    } else {
+      windy.value.contentWindow.postMessage({
+        type: 'run',
+        name: moonsetMoonriseLine.name,
+        func: getFuncString(moonsetMoonriseLine),
+        data: data
+      },'*')
+    }
+  }
+
 }
 
-const drawSunLine = (val) => {
+const drawPosLine = (val) => {
   const data = JSON.parse(JSON.stringify(val))
   function move(data, L, map) {
     const init = () => {
-      window.sunLine = L.polyline(data, {color: '#ffffff', weight: 2});
-      window.sunLine.addTo(map)
+      window.posLine = L.polyline(data, {color: '#ffffff', weight: 2});
+      window.posLine.addTo(map)
     }
 
-    if (!window.sunLine) {
+    if (!window.posLine) {
       init()
     } else {
-      window.sunLine.setLatLngs(data)
+      window.posLine.setLatLngs(data)
     }
   }
 
@@ -140,9 +236,21 @@ const getSunrise = async () => {
   boundary.value = Math.round(res.data.boundary);
 }
 
-const getSunPos = async () => {
-  const res = await getJSON(`api/getSunPos?lat=${lat.value}&lng=${lng.value}`);
-  drawSunLine(res.data)
+const getMoonset = async () => {
+  const res = await getJSON(`api/getMoonsetTime?lat=${lat.value}&lng=${lng.value}&time=${date.value.valueOf()}&hc=${cloudHeight.value / 1000}`);
+  lineData.value = res.data;
+  boundary.value = Math.round(res.data.boundary);
+}
+
+const getMoonrise = async () => {
+  const res = await getJSON(`api/getMoonriseTime?lat=${lat.value}&lng=${lng.value}&time=${date.value.valueOf()}&hc=${cloudHeight.value / 1000}`);
+  lineData.value = res.data;
+  boundary.value = Math.round(res.data.boundary);
+}
+
+const getPos = async () => {
+  const res = await getJSON(`api/getPos?lat=${lat.value}&lng=${lng.value}&mode=${mode.value}`);
+  drawPosLine(res.data)
 }
 
 const getCityPos = async () => {
@@ -158,20 +266,34 @@ const getCityPos = async () => {
 // ----- attribute change -----
 
 const changeType = async () => {
-  if (type.value === 'sunset') {
-    try {
-      await getSunset()
-      setLineAndMarker(lineData.value)
-    } catch (e) {
-      message.error(JSON.stringify(e))
+  getPos();
+  try {
+    if (mode.value === 'sun') {
+      if (type.value === 'sunset') {
+        await getSunset()
+        setLineAndMarker(lineData.value)
+      } else if (type.value === 'sunrise') {
+        await getSunrise()
+        setLineAndMarker(lineData.value)
+      }
+    } else if (mode.value === 'moon') {
+      if (type.value === 'sunset') {
+        await getMoonset()
+        setLineAndMarker(lineData.value)
+      } else if (type.value === 'sunrise') {
+        await getMoonrise()
+        setLineAndMarker(lineData.value)
+      }
     }
-  } else if (type.value === 'sunrise') {
-    try {
-      await getSunrise()
-      setLineAndMarker(lineData.value)
-    } catch (e) {
-      message.error(JSON.stringify(e))
-    }
+  } catch (e) {
+    if (e && e.msg) {
+      if (e.msg === '404 - Current date has no moonrise') message.error("该日期该地点无月升！")
+      else if (e.msg === '404 - Current date has no moonset') message.error("该日期该地点无月落！")
+      else message.error(JSON.stringify(e))
+    } else message.error(JSON.stringify(e))
+    // clear
+    lineData.value = { "clear": true }
+    setLineAndMarker(lineData.value)
   }
 }
 
@@ -219,7 +341,7 @@ const changePos = async (_lat = undefined, _lng = undefined) => {
   }
 
   await changeType()
-  await getSunPos()
+  await getPos()
   windy.value.contentWindow.postMessage({
     type: 'pickerPos',
     pos: null
@@ -275,8 +397,8 @@ const init = () => {
   try {
     setLineAndMarker(lineData.value)
     setPositionListener()
-    setInterval(getSunPos,5000)
-    getSunPos()
+    setInterval(getPos,5000)
+    getPos()
   } catch (e) {
     message.error(e)
   }
@@ -323,14 +445,17 @@ onMounted(async () => {
 
 <template>
 <div id="windy-container">
+  <!-- 上方功能区 -->
   <div class="content">
     <a-card>
       <div class="vcenter">
         <span class="item">
           <span>类型：</span>
           <a-radio-group v-model:value="type" button-style="solid" @change="changeType">
-            <a-radio-button value="sunset">晚霞</a-radio-button>
-            <a-radio-button value="sunrise">朝霞</a-radio-button>
+            <a-radio-button value="sunset" v-if="mode === 'sun'">晚霞</a-radio-button>
+            <a-radio-button value="sunrise" v-if="mode === 'sun'">朝霞</a-radio-button>
+            <a-radio-button value="sunset" v-if="mode === 'moon'">月落</a-radio-button>
+            <a-radio-button value="sunrise" v-if="mode === 'moon'">月升</a-radio-button>
           </a-radio-group>
         </span>
         <span class="item">
@@ -366,17 +491,27 @@ onMounted(async () => {
       </div>
       <div class="vcenter">
         <span class="item">
+          <span>模式：</span>
+          <a-radio-group v-model:value="mode" button-style="solid" @change="changeType">
+            <a-radio-button value="sun">朝晚霞</a-radio-button>
+            <a-radio-button value="moon">月升落</a-radio-button>
+          </a-radio-group>
+        </span>
+        <span class="item">
           <span>云底高度：{{ cloudHeight / 1000 }} km</span>&nbsp;
           <a-button ghost @click="showCloudHeight = true;_cloudHeight = cloudHeight">修改</a-button>
         </span>
       </div>
     </a-card>
   </div>
+  <!-- windy container -->
   <div id="container">
     <iframe v-if="loadMap" ref="windy" id="windy" :src="`//${domain}:9180/sunset/windy_iframe?lat=${lat_init}&lon=${lng_init}`" frameborder="0"></iframe>
   </div>
+  <!-- 下方提示 -->
   <div class="content bottom" ref="bottom">
     <div class="hide-button" @click="showBottom = !showBottom">{{showBottom ? '收缩' : '展开'}}</div>
+    <!-- 当前信息显示处 -->
     <div v-show="showBottom" class="info">
       <span class="pos-span"><b>经纬度:&nbsp;</b>{{lat}}, {{lng}}<button v-if="pickerPos != null" @click="changePos">修改位置</button></span>
       <div class="pos-table">
@@ -387,15 +522,21 @@ onMounted(async () => {
         <div><button v-if="pickerPos != null" @click="changePos">修改位置</button></div>
       </div>
       <span class="clear"></span>
-      <span><b>{{ type === 'sunset' ? '落日' : '日出' }}时间:&nbsp;</b>{{ lineData.time }}</span>
+      <span><b>{{ mode === 'sun' ?
+          (type === 'sunset' ? '落日' : '日出') :
+          (type === 'sunset' ? '月落' : '月出') }}时间:&nbsp;</b>{{ lineData.time }}</span>
     </div>
+    <!-- 图例提示 -->
     <div v-show="showBottom" class="tip">
       <div class="divider"></div>
-      <div>说明：<span style="color: #ff5900">浅橙色</span>代表太阳落日前30分钟线，<span style="color: #ff2400">橙色</span>代表落日线，<span style="color: #cc0000">暗红色</span>代表太阳落日后30分钟线；<span style="color: #7553f2;">紫色点</span>代表您的位置，<span style="color: #17aa03;">绿色点</span>代表距离您<b>{{boundary}}km</b>处，<span style="color: #318bff;">蓝色点</span>代表距离您<b>{{boundary*2}}km</b>处。一般而言，<b><span style="color: #7553f2;">紫色点</span>和<span style="color: #17aa03;">绿色点</span>之间有云，<span style="color: #17aa03;">绿色点</span>和<span style="color: #318bff;">蓝色点</span>之间没有云，说明有<span style="color: #ff2400">晚霞</span>。</b>如果<span style="color: #7553f2;">紫色点</span>和<span style="color: #17aa03;">绿色点</span>之间的云太厚了，那么无云空间需要离您更近才可能会烧。</div>
+      <WindyTip :boundary="boundary" :mode="mode" :type="type.endsWith('set') ? 'set' : 'rise'"/>
     </div>
+    <!-- 图例提示（高度窄） -->
     <div v-show="showBottom" class="tip-expand">
       <div @click="openTip = true">展开说明</div>
     </div>
+
+    <!-- 设置云底高度对话框 -->
     <a-modal v-model:open="showCloudHeight"
              title="云底高度"
              ok-text="确定"
@@ -426,6 +567,8 @@ onMounted(async () => {
       </div>
     </a-modal>
   </div>
+
+  <!-- 图例提示（高度窄） -->
   <a-drawer
       v-model:open="openTip"
       :style="{
@@ -436,7 +579,7 @@ onMounted(async () => {
       height="150"
       @after-open-change="afterOpenChange"
   >
-    <div>说明：<span style="color: #ff5900">浅橙色</span>代表太阳落日前30分钟线，<span style="color: #ff2400">橙色</span>代表落日线，<span style="color: #cc0000">暗红色</span>代表太阳落日后30分钟线；<span style="color: #7553f2;">紫色点</span>代表您的位置，<span style="color: #17aa03;">绿色点</span>代表距离您<b>{{boundary}}km</b>处，<span style="color: #318bff;">蓝色点</span>代表距离您<b>{{boundary*2}}km</b>处。一般而言，<b><span style="color: #7553f2;">紫色点</span>和<span style="color: #17aa03;">绿色点</span>之间有云，<span style="color: #17aa03;">绿色点</span>和<span style="color: #318bff;">蓝色点</span>之间没有云，说明有<span style="color: #ff2400">晚霞</span>。</b>如果<span style="color: #7553f2;">紫色点</span>和<span style="color: #17aa03;">绿色点</span>之间的云太厚了，那么无云空间需要离您更近才可能会烧。</div>
+    <WindyTip :boundary="boundary" :mode="mode" :type="type.endsWith('set') ? 'set' : 'rise'"/>
   </a-drawer>
 </div>
 </template>
