@@ -5,3 +5,5 @@ uvicorn[standard]
 geopy
 numpy
 Pillow
+redis
+captcha

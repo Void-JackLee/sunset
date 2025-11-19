@@ -5,6 +5,7 @@ import {getJSON} from "../util/request.js";
 import dayjs from 'dayjs';
 import {round} from "lodash-es";
 import WindyTip from "../components/WindyTip.vue";
+import CitySearch from "../components/CitySearch.vue";
 
 const windy = ref()
 const openTip = ref(false)
@@ -24,7 +25,6 @@ const overlay = ref("satellite")
 const product = ref("ecmwf")
 const date = ref(dayjs())
 const pickerPos = ref(null) // { lat: number, lon: number }
-const city = ref(null)
 
 const _cloudHeight = ref(3150)
 const confirmLoading = ref(false);
@@ -253,16 +253,6 @@ const getPos = async () => {
   drawPosLine(res.data)
 }
 
-const getCityPos = async () => {
-  try {
-    const res = await getJSON(`api/getLocation?loc=${city.value}`);
-    moveCenter(res.data.lat, res.data.lng)
-    changePos(res.data.lat, res.data.lng)
-  } catch (err) {
-    message.error(err.msg);
-  }
-}
-
 // ----- attribute change -----
 
 const changeType = async () => {
@@ -476,17 +466,11 @@ onMounted(async () => {
       </div>
       <div class="vcenter">
         <span class="item">
-          <span>时间: </span>
+          <span>时间：</span>
           <a-date-picker v-model:value="date" @change="changeDate"/>
         </span>
         <span class="item">
-          <span>位置: </span>
-          <a-input-search
-              v-model:value="city"
-              placeholder="请输入城市"
-              enter-button
-              @search="getCityPos"
-          />
+          <CitySearch @changePos="(lat, lng) => { moveCenter(lat, lng); changePos(lat, lng) }"></CitySearch>
         </span>
       </div>
       <div class="vcenter">
@@ -758,7 +742,7 @@ onMounted(async () => {
   }
 }
 
-
+// 统一暗黑风格
 :deep {
   .ant-card-body {
     padding: 5px 10px !important;
