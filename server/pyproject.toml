@@ -17,5 +17,8 @@ dependencies = [
     "uvicorn[standard]>=0.42.0",
 ]
 
+[[tool.uv.index]]
+url = "https://mirrors.aliyun.com/pypi/simple/"
+
 [tool.uv]
 link-mode = "symlink"
