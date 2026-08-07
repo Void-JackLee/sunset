@@ -9,13 +9,19 @@ dependencies = [
     "captcha>=0.7.1",
     "fastapi>=0.135.3",
     "geopy>=2.4.1",
+    "jupyter>=1.1.1",
+    "matplotlib>=3.11.1",
     "numpy>=2.4.4",
     "pillow>=12.2.0",
     "pyyaml>=6.0.3",
     "redis>=7.4.0",
     "requests>=2.33.1",
+    "timezonefinder>=8.2.5",
     "uvicorn[standard]>=0.42.0",
 ]
+
+[[tool.uv.index]]
+url = "https://mirrors.aliyun.com/pypi/simple/"
 
 [tool.uv]
 link-mode = "symlink"

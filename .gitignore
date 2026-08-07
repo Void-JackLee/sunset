@@ -15,6 +15,7 @@ logs
 
 # Python cache
 **/__pycache__/
+.venv/
 
 # config file
 lbs.yml
