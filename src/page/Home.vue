@@ -1,7 +1,15 @@
 <script setup>
 import {ref} from "vue";
+import {useRoute, useRouter} from "vue-router";
 
-const selectedKeys = ref(['windy']);
+const route = useRoute();
+const router = useRouter();
+
+let select = route.path.split('/').pop()
+const selectedKeys = ref([select]);
+const handleClick = e => {
+  window.location.href = e.key
+};
 
 const year = ref(new Date().getFullYear())
 </script>
@@ -14,9 +22,11 @@ const year = ref(new Date().getFullYear())
           v-model:selectedKeys="selectedKeys"
           theme="dark"
           mode="horizontal"
+          @click="handleClick"
           :style="{ lineHeight: '64px' }"
       >
         <a-menu-item key="windy"><b>windy</b></a-menu-item>
+<!--        <a-menu-item key="preview-3d"><b>3D预览</b></a-menu-item>-->
       </a-menu>
     </a-layout-header>
     <router-view style="flex: 1" />

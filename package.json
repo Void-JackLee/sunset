@@ -7,6 +7,7 @@
     "dev": "vite --mode dev",
     "build": "vite build",
     "caddy": "export http_proxy=127.0.0.1:1087;export https_proxy=$http_proxy && caddy run",
+    "server": "cd server && uv run uvicorn sunset_server:app --reload --port 8190",
     "preview": "vite preview"
   },
   "dependencies": {
