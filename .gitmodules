@@ -1,0 +1,3 @@
+[submodule "server"]
+	path = server
+	url = ../sunset_server.git
