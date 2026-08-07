@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Form
-from api import ast, geo, captcha
+from src.api import ast, geo, captcha
 
 app = FastAPI()
 

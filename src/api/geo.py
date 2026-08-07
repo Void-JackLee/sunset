@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request
 import requests
-from result import ok, err
+from ..result import ok, err
 import math
 from .captcha import verifyCode
 from config import lbs_config

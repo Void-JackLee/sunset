@@ -1,5 +1,5 @@
-from result import ok, err
-from src.degree import get_sunset, get_sunrise, get_sun_deg, get_moon_deg, get_boundary, get_moonset, get_moonrise
+from ..result import ok, err
+from ..service.degree import get_sunset, get_sunrise, get_sun_deg, get_moon_deg, get_boundary, get_moonset, get_moonrise
 from datetime import timedelta, datetime, timezone as tz
 from geopy.distance import distance
 import math
@@ -8,7 +8,7 @@ from fastapi import APIRouter, Query
 def getSunsetPolyLine(lat,lng,time=None,boundary = 200, timezone=8):
     time_sunset,deg_dir,deg_height = get_sunset(lat,lng,time,timezone=timezone)
     _,before_deg_dir,before_deg_height = get_sunset(lat,lng,time,delta=timedelta(hours=-0.5),timezone=timezone)
-    _,after_deg_dir,adter_deg_height = get_sunset(lat,lng,time,delta=timedelta(hours=0.5),timezone=timezone)
+    _,after_deg_dir,after_deg_height = get_sunset(lat,lng,time,delta=timedelta(hours=0.5),timezone=timezone)
 
     target_lat, target_lng, _ = distance(kilometers=2*boundary).destination((lat,lng),bearing=deg_dir * 180 / math.pi)
     mid_lat, mid_lng, _ = distance(kilometers=boundary).destination((lat,lng),bearing=deg_dir * 180 / math.pi)
@@ -41,7 +41,7 @@ def getSunsetPolyLine(lat,lng,time=None,boundary = 200, timezone=8):
 def getSunrisePolyLine(lat,lng,time=None,boundary = 200, timezone=8):
     time_sunrise,deg_dir,deg_height = get_sunrise(lat,lng,time,timezone=timezone)
     _,before_deg_dir,before_deg_height = get_sunrise(lat,lng,time,delta=timedelta(hours=-0.5),timezone=timezone)
-    _,after_deg_dir,adter_deg_height = get_sunrise(lat,lng,time,delta=timedelta(hours=0.5),timezone=timezone)
+    _,after_deg_dir,after_deg_height = get_sunrise(lat,lng,time,delta=timedelta(hours=0.5),timezone=timezone)
 
     target_lat, target_lng, _ = distance(kilometers=2*boundary).destination((lat,lng),bearing=deg_dir * 180 / math.pi)
     mid_lat, mid_lng, _ = distance(kilometers=boundary).destination((lat,lng),bearing=deg_dir * 180 / math.pi)
@@ -74,7 +74,7 @@ def getSunrisePolyLine(lat,lng,time=None,boundary = 200, timezone=8):
 def getMoonsetPolyLine(lat,lng,time=None,boundary = 200, timezone=8):
     time_moonset,deg_dir,deg_height = get_moonset(lat,lng,time,timezone=timezone)
     _,before_deg_dir,before_deg_height = get_moonset(lat,lng,time,delta=timedelta(hours=-0.5),timezone=timezone)
-    _,after_deg_dir,adter_deg_height = get_moonset(lat,lng,time,delta=timedelta(hours=0.5),timezone=timezone)
+    _,after_deg_dir,after_deg_height = get_moonset(lat,lng,time,delta=timedelta(hours=0.5),timezone=timezone)
 
     # target_lat, target_lng, _ = distance(kilometers=2*boundary).destination((lat,lng),bearing=deg_dir * 180 / math.pi)
     mid_lat, mid_lng, _ = distance(kilometers=boundary).destination((lat,lng),bearing=deg_dir * 180 / math.pi)
@@ -107,7 +107,7 @@ def getMoonsetPolyLine(lat,lng,time=None,boundary = 200, timezone=8):
 def getMoonrisePolyLine(lat,lng,time=None,boundary = 200, timezone=8):
     time_moonrise,deg_dir,deg_height = get_moonrise(lat,lng,time,timezone=timezone)
     _,before_deg_dir,before_deg_height = get_moonrise(lat,lng,time,delta=timedelta(hours=-0.5),timezone=timezone)
-    _,after_deg_dir,adter_deg_height = get_moonrise(lat,lng,time,delta=timedelta(hours=0.5),timezone=timezone)
+    _,after_deg_dir,after_deg_height = get_moonrise(lat,lng,time,delta=timedelta(hours=0.5),timezone=timezone)
 
     # target_lat, target_lng, _ = distance(kilometers=2*boundary).destination((lat,lng),bearing=deg_dir * 180 / math.pi)
     mid_lat, mid_lng, _ = distance(kilometers=boundary).destination((lat,lng),bearing=deg_dir * 180 / math.pi)
