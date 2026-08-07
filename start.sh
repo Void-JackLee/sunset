@@ -1,0 +1,1 @@
+uv run uvicorn sunset_server:app --reload --port 8190

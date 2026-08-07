@@ -1,0 +1,10 @@
+astral
+requests
+fastapi
+uvicorn[standard]
+geopy
+numpy
+Pillow
+redis
+captcha
+PyYAML
