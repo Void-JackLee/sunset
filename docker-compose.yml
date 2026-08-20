@@ -25,8 +25,10 @@ services:
       - /root/html:/root/html
     ports:
       - "80:80"
-      - "443:443"
-      - "9180:9180"
+      - "443:443/tcp"
+      - "443:443/udp"
+      - "9180:9180/tcp"
+      - "9180:9180/udp"
   redis:
     image: redis:7.2-alpine
     container_name: sunsetting-redis
