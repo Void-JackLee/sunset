@@ -16,8 +16,13 @@ services:
       - .env
       - .env.docker
     volumes:
+      # 配置文件
 #      - ./caddy/Caddyfile.normal:/data/Caddyfile
       - ./caddy/Caddyfile.proxy:/data/Caddyfile
+      # 持久化
+      - /root/caddy-data:/data/caddy
+      # 前端
+      - /root/html:/root/html
     ports:
       - "80:80"
       - "443:443"

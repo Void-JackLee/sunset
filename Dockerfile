@@ -9,4 +9,4 @@ COPY . .
 
 RUN uv sync
 
-ENTRYPOINT ["uv", "run" ,"uvicorn" ,"src.sunset_server:app", "--reload", "--port", "8190"]
+ENTRYPOINT ["uv", "run" ,"uvicorn" ,"src.sunset_server:app", "--host", "0.0.0.0", "--port", "8190"]
