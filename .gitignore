@@ -18,4 +18,4 @@ logs
 .venv/
 
 # config file
-lbs.yml
+.env
