@@ -3,7 +3,7 @@ from datetime import datetime
 from fastapi import APIRouter, Request
 
 from ..service.open_meteo import get_point_forecast, find_main_cloud_bottom
-from ..result import ok, err
+from ..util.result import ok, err
 
 app = APIRouter()
 

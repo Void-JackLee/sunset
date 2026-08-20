@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Request
 import requests
-from ..result import ok, err
+from ..util.result import ok, err
 import math
 from .captcha import verifyCode
-from config import lbs_config
+from ..util.config import lbs_config
 
 app = APIRouter()
 

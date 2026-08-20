@@ -1,4 +1,4 @@
-from ..result import ok, err
+from ..util.result import ok, err
 from ..service.degree import get_sunset, get_sunrise, get_sun_deg, get_moon_deg, get_boundary, get_moonset, get_moonrise
 from datetime import timedelta, datetime, timezone as tz
 from geopy.distance import distance

@@ -1,3 +1,4 @@
+import os
 from fastapi import APIRouter, Request
 import redis
 import uuid
@@ -5,7 +6,7 @@ from captcha.image import ImageCaptcha
 from fastapi.responses import StreamingResponse
 
 app = APIRouter()
-r = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+r = redis.Redis(host=os.getenv('REDIS_IP', 'localhost'), port=6379, db=0, decode_responses=True)
 
 def verifyCode(code: str, request: Request):
     captcha_id = request.cookies.get("captcha-id")
