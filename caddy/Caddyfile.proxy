@@ -1,0 +1,83 @@
+# {
+#     auto_https disable_redirects
+# }
+
+{
+    email 1071426378@163.com
+}
+
+#:80 {
+sunsetting.cn {
+    handle_path /* {
+        root * /root/html/
+        file_server
+        try_files {path} /
+    }
+
+    handle_path /api/* {
+         rewrite * /api{path}
+         reverse_proxy localhost:8190
+    }
+}
+
+(replace_windy) {
+    request_header -Accept-Encoding
+    replace {
+        "windy.com" "windy.sunsetting.cn:9180"
+    }
+}
+
+(all_header) {
+    header_up -Via
+    header_up Accept-Encoding "identity" # replace_windy: 添加不压缩标记
+    header_up -X-Forwarded-For
+    header_up -X-Forwarded-Host
+    header_up -X-Forwarded-Proto
+    header_up Sec-Fetch-Site cross-site
+    header_up Connection keep-alive
+}
+
+sunsetting.cn:9180 {
+
+    # tls /root/key/bsres.cn.pem /root/key/bsres.cn.key {
+    #     ciphers TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+    #     alpn h2 http/1.1
+    # }
+
+    handle_path /sunset/* {
+        root * /root/html/
+        file_server
+        try_files {path} /
+    }
+
+    import replace_windy
+
+    reverse_proxy /* {
+        to https://embed.windy.com
+        header_up Host embed.windy.com
+
+        import all_header
+    }
+}
+
+# 专门代理其他请求
+*.windy.sunsetting.cn:9180 {
+    tls {
+        dns alidns {
+            access_key_id {$ALIDNS_ACCESS_KEY_ID}
+            access_key_secret {$ALIDNS_ACCESS_KEY_SECRET}
+        }
+    }
+
+    import replace_windy
+
+    reverse_proxy /* {
+        to {http.request.host.labels.3}.windy.com:443
+        transport http {
+            tls
+        }
+        header_up Host {http.request.host.labels.3}.windy.com
+
+        import all_header
+    }
+}

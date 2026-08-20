@@ -1,0 +1,33 @@
+services:
+  api:
+    build: .
+    container_name: sunsetting-api
+    env_file:
+      - .env
+      - .env.docker
+    networks:
+      - sunsetting-net
+  caddy:
+    build: ./caddy
+    container_name: sunsetting-caddy
+    networks:
+      - sunsetting-net
+    env_file:
+      - .env
+      - .env.docker
+    volumes:
+#      - ./caddy/Caddyfile.normal:/data/Caddyfile
+      - ./caddy/Caddyfile.proxy:/data/Caddyfile
+    ports:
+      - "80:80"
+      - "443:443"
+      - "9180:9180"
+  redis:
+    image: redis:7.2-alpine
+    container_name: sunsetting-redis
+    networks:
+      - sunsetting-net
+
+networks:
+  sunsetting-net:
+    name: sunsetting-net

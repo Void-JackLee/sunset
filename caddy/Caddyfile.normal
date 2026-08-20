@@ -20,6 +20,16 @@ sunsetting.cn {
     }
 }
 
+(all_header) {
+    header_up -Via
+    header_up Host embed.windy.com
+    header_up -X-Forwarded-For
+    header_up -X-Forwarded-Host
+    header_up -X-Forwarded-Proto
+    header_up Sec-Fetch-Site cross-site
+    header_up Connection keep-alive
+}
+
 sunsetting.cn:9180 {
 
     # tls /root/key/bsres.cn.pem /root/key/bsres.cn.key {
@@ -34,12 +44,7 @@ sunsetting.cn:9180 {
     }
     reverse_proxy /* {
         to https://embed.windy.com
-        header_up -Via
-        header_up Host embed.windy.com
-        header_up -X-Forwarded-For
-        header_up -X-Forwarded-Host
-        header_up -X-Forwarded-Proto
-        header_up Sec-Fetch-Site cross-site
-        header_up Connection keep-alive
+
+        import all_header
     }
 }
