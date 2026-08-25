@@ -8,7 +8,7 @@ services:
     networks:
       - sunsetting-net
   caddy:
-    build: ./caddy
+    build: ./web
     container_name: sunsetting-caddy
     networks:
       - sunsetting-net
