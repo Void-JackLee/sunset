@@ -1,6 +1,6 @@
 services:
   api:
-    build: .
+    image: ghcr.io/void-jacklee/sunset:latest
     container_name: sunsetting-api
     env_file:
       - .env
@@ -8,7 +8,7 @@ services:
     networks:
       - sunsetting-net
   caddy:
-    build: ./web
+    image: ghcr.io/void-jacklee/sunset-web:latest
     container_name: sunsetting-caddy
     networks:
       - sunsetting-net

@@ -12,6 +12,7 @@
 
     ```shell
     git clone --recurse-submodules https://github.com/Void-JackLee/sunset
+    cd sunset
     ```
 
 2. Config
@@ -26,4 +27,25 @@
 
     ```shell
     docker compose up -d
+    ```
+
+# Update
+
+1. Git pull
+
+    ```shell
+    git pull --recurse-submodules
+    ```
+
+2. Docker pull & start
+
+    ```shell
+    docker compose pull
+    docker compose up -d
+    ```
+
+3. Clear old images
+
+    ```shell
+    docker image prune -f
     ```

@@ -5,8 +5,9 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
 WORKDIR /app
 
-COPY . .
-
+COPY pyproject.toml uv.lock ./
 RUN uv sync
+
+COPY . .
 
 ENTRYPOINT ["uv", "run" ,"uvicorn" ,"src.sunset_server:app", "--host", "0.0.0.0", "--port", "8190"]
