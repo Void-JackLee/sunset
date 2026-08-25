@@ -43,7 +43,7 @@ jobs:
           file: ./Dockerfile
           push: true
           # 镜像名称格式：ghcr.io/你的用户名/主项目名:latest
-          tags: ghcr.io/${{ github.repository_owner }}/sunset:latest
+          tags: ghcr.io/void-jacklee/sunset:latest
           # --- 核心缓存配置 ---
           cache-from: type=gha,scope=sunset
           cache-to: type=gha,mode=max,scope=sunset
@@ -59,7 +59,7 @@ jobs:
           file: ./web/Dockerfile
           push: true
           # 镜像名称格式：ghcr.io/你的用户名/子项目名:latest
-          tags: ghcr.io/${{ github.repository_owner }}/sunset-web:latest
+          tags: ghcr.io/void-jacklee/sunset-web:latest
           # --- 核心缓存配置 ---
           cache-from: type=gha,scope=sunset-web
           cache-to: type=gha,mode=max,scope=sunset-web
