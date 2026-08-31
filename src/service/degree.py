@@ -1,16 +1,16 @@
 from astral import Observer, sun, moon
 from datetime import datetime, timedelta, timezone as tz
+from zoneinfo import ZoneInfo
 import math
 
 R = 6371.393 # 地球半径，单位km
 
-def get_sunset(lat, lng, time = None, delta = timedelta(),timezone = 8):
+def get_sunset(lat, lng, time: datetime = None, delta = timedelta(),timezone = "Asia/Shanghai"):
     if time == None:
         time = datetime.now()
-        time = time.astimezone(tz(timedelta(hours=timezone)))
+        time = time.astimezone(ZoneInfo(timezone))
     else:
-        time = datetime.strptime(str(time),'%Y%m%d')
-        time = time.replace(tzinfo=tz(timedelta(hours=timezone)))
+        time = time.replace(tzinfo=ZoneInfo(timezone))
     loc = Observer(latitude = lat,longitude = lng)
     time_sunset = sun.sunset(loc,time)
 
@@ -18,13 +18,12 @@ def get_sunset(lat, lng, time = None, delta = timedelta(),timezone = 8):
 
     return time_sunset + delta,deg_dir,deg_height
 
-def get_sunrise(lat, lng, time = None, delta = timedelta(),timezone = 8):
+def get_sunrise(lat, lng, time: datetime = None, delta = timedelta(),timezone = "Asia/Shanghai"):
     if time == None:
         time = datetime.now()
-        time = time.astimezone(tz(timedelta(hours=timezone)))
+        time = time.astimezone(ZoneInfo(timezone))
     else:
-        time = datetime.strptime(str(time),'%Y%m%d')
-        time = time.replace(tzinfo=tz(timedelta(hours=timezone)))
+        time = time.replace(tzinfo=ZoneInfo(timezone))
     loc = Observer(latitude = lat,longitude = lng)
     time_sunrise = sun.sunrise(loc,time)
 
@@ -32,13 +31,12 @@ def get_sunrise(lat, lng, time = None, delta = timedelta(),timezone = 8):
 
     return time_sunrise + delta,deg_dir,deg_height
 
-def get_moonset(lat, lng, time = None, delta = timedelta(),timezone = 8):
+def get_moonset(lat, lng, time: datetime = None, delta = timedelta(),timezone = "Asia/Shanghai"):
     if time == None:
         time = datetime.now()
-        time = time.astimezone(tz(timedelta(hours=timezone)))
+        time = time.astimezone(ZoneInfo(timezone))
     else:
-        time = datetime.strptime(str(time),'%Y%m%d')
-        time = time.replace(tzinfo=tz(timedelta(hours=timezone)))
+        time = time.replace(tzinfo=ZoneInfo(timezone))
     loc = Observer(latitude = lat,longitude = lng)
     time_moonset = moon.moonset(loc,time,time.tzinfo)
 
@@ -48,13 +46,12 @@ def get_moonset(lat, lng, time = None, delta = timedelta(),timezone = 8):
         
     return time_moonset + delta,deg_dir,deg_height
 
-def get_moonrise(lat,lng,time = None,delta = timedelta(),timezone = 8):
+def get_moonrise(lat,lng,time: datetime = None,delta = timedelta(),timezone = "Asia/Shanghai"):
     if time == None:
         time = datetime.now()
-        time = time.astimezone(tz(timedelta(hours=timezone)))
+        time = time.astimezone(ZoneInfo(timezone))
     else:
-        time = datetime.strptime(str(time),'%Y%m%d')
-        time = time.replace(tzinfo=tz(timedelta(hours=timezone)))
+        time = time.replace(tzinfo=ZoneInfo(timezone))
     loc = Observer(latitude = lat,longitude = lng)
     time_moonrise = moon.moonrise(loc,time,time.tzinfo)
 

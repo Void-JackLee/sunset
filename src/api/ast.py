@@ -4,8 +4,9 @@ from datetime import timedelta, datetime, timezone as tz
 from geopy.distance import distance
 import math
 from fastapi import APIRouter, Query
+from zoneinfo import ZoneInfo
 
-def getSunsetPolyLine(lat,lng,time=None,boundary = 200, timezone=8):
+def getSunsetPolyLine(lat,lng,time=None,boundary = 200, timezone = "Asia/Shanghai"):
     time_sunset,deg_dir,deg_height = get_sunset(lat,lng,time,timezone=timezone)
     _,before_deg_dir,before_deg_height = get_sunset(lat,lng,time,delta=timedelta(hours=-0.5),timezone=timezone)
     _,after_deg_dir,after_deg_height = get_sunset(lat,lng,time,delta=timedelta(hours=0.5),timezone=timezone)
@@ -38,7 +39,7 @@ def getSunsetPolyLine(lat,lng,time=None,boundary = 200, timezone=8):
     }
     return data
 
-def getSunrisePolyLine(lat,lng,time=None,boundary = 200, timezone=8):
+def getSunrisePolyLine(lat,lng,time=None,boundary = 200, timezone = "Asia/Shanghai"):
     time_sunrise,deg_dir,deg_height = get_sunrise(lat,lng,time,timezone=timezone)
     _,before_deg_dir,before_deg_height = get_sunrise(lat,lng,time,delta=timedelta(hours=-0.5),timezone=timezone)
     _,after_deg_dir,after_deg_height = get_sunrise(lat,lng,time,delta=timedelta(hours=0.5),timezone=timezone)
@@ -71,7 +72,7 @@ def getSunrisePolyLine(lat,lng,time=None,boundary = 200, timezone=8):
     }
     return data
 
-def getMoonsetPolyLine(lat,lng,time=None,boundary = 200, timezone=8):
+def getMoonsetPolyLine(lat,lng,time=None,boundary = 200, timezone = "Asia/Shanghai"):
     time_moonset,deg_dir,deg_height = get_moonset(lat,lng,time,timezone=timezone)
     _,before_deg_dir,before_deg_height = get_moonset(lat,lng,time,delta=timedelta(hours=-0.5),timezone=timezone)
     _,after_deg_dir,after_deg_height = get_moonset(lat,lng,time,delta=timedelta(hours=0.5),timezone=timezone)
@@ -104,7 +105,7 @@ def getMoonsetPolyLine(lat,lng,time=None,boundary = 200, timezone=8):
     }
     return data
 
-def getMoonrisePolyLine(lat,lng,time=None,boundary = 200, timezone=8):
+def getMoonrisePolyLine(lat,lng,time=None,boundary = 200, timezone = "Asia/Shanghai"):
     time_moonrise,deg_dir,deg_height = get_moonrise(lat,lng,time,timezone=timezone)
     _,before_deg_dir,before_deg_height = get_moonrise(lat,lng,time,delta=timedelta(hours=-0.5),timezone=timezone)
     _,after_deg_dir,after_deg_height = get_moonrise(lat,lng,time,delta=timedelta(hours=0.5),timezone=timezone)
@@ -138,8 +139,8 @@ def getMoonrisePolyLine(lat,lng,time=None,boundary = 200, timezone=8):
     return data
 
 
-def getSunPosition(lat,lng,timezone=8):
-    time = datetime.now().astimezone(tz(timedelta(hours=timezone)))
+def getSunPosition(lat,lng,timezone = "Asia/Shanghai"):
+    time = datetime.now().astimezone(tz=ZoneInfo(timezone))
     deg_dir, deg_height = get_sun_deg(lat,lng,time)
     target_lat, target_lng, _ = distance(kilometers=600).destination((lat,lng),bearing=deg_dir * 180 / math.pi)
     data = [
@@ -148,8 +149,8 @@ def getSunPosition(lat,lng,timezone=8):
     ]
     return data
 
-def getMoonPosition(lat,lng,timezone=8):
-    time = datetime.now().astimezone(tz(timedelta(hours=timezone)))
+def getMoonPosition(lat,lng,timezone = "Asia/Shanghai"):
+    time = datetime.now().astimezone(tz=ZoneInfo(timezone))
     deg_dir, deg_height = get_moon_deg(lat,lng,time)
     target_lat, target_lng, _ = distance(kilometers=600).destination((lat,lng),bearing=deg_dir * 180 / math.pi)
     data = [
@@ -161,41 +162,41 @@ def getMoonPosition(lat,lng,timezone=8):
 app = APIRouter()
 
 @app.get("/getSunsetTime")
-async def getSunsetTime(lat: float, lng: float, time: int, hc: float = Query(None)):
+async def getSunsetTime(lat: float, lng: float, time: int, hc: float = Query(None), timezone: str = Query("Asia/Shanghai")):
     if hc is None:
         hc = 3.15
-    return ok(getSunsetPolyLine(lat, lng, datetime.fromtimestamp(time / 1000).strftime('%Y%m%d'),get_boundary(hc)))
+    return ok(getSunsetPolyLine(lat, lng, datetime.fromtimestamp(time / 1000, tz=ZoneInfo(timezone)),get_boundary(hc),timezone))
 
 @app.get("/getSunriseTime")
-async def getSunriseTime(lat: float, lng: float, time: int, hc: float = Query(None)):
+async def getSunriseTime(lat: float, lng: float, time: int, hc: float = Query(None), timezone: str = Query("Asia/Shanghai")):
     if hc is None:
         hc = 3.15
-    return ok(getSunrisePolyLine(lat, lng, datetime.fromtimestamp(time / 1000).strftime('%Y%m%d'),get_boundary(hc)))
+    return ok(getSunrisePolyLine(lat, lng, datetime.fromtimestamp(time / 1000, tz=ZoneInfo(timezone)),get_boundary(hc),timezone))
 
 @app.get("/getMoonriseTime")
-async def getSunriseTime(lat: float, lng: float, time: int, hc: float = Query(None)):
+async def getSunriseTime(lat: float, lng: float, time: int, hc: float = Query(None), timezone: str = Query("Asia/Shanghai")):
     if hc is None:
         hc = 3.15
     try:
-        res = ok(getMoonrisePolyLine(lat, lng, datetime.fromtimestamp(time / 1000).strftime('%Y%m%d'),get_boundary(hc)))
+        res = ok(getMoonrisePolyLine(lat, lng, datetime.fromtimestamp(time / 1000, tz=ZoneInfo(timezone)),get_boundary(hc),timezone))
     except Exception as e:
         res = err('Current date has no moonrise', 404)
     return res
 
 @app.get("/getMoonsetTime")
-async def getMoonsetTime(lat: float, lng: float, time: int, hc: float = Query(None)):
+async def getMoonsetTime(lat: float, lng: float, time: int, hc: float = Query(None), timezone: str = Query("Asia/Shanghai")):
     if hc is None:
         hc = 3.15
     try:
-        res = ok(getMoonsetPolyLine(lat, lng, datetime.fromtimestamp(time / 1000).strftime('%Y%m%d'),get_boundary(hc)))
+        res = ok(getMoonsetPolyLine(lat, lng, datetime.fromtimestamp(time / 1000, tz=ZoneInfo(timezone)),get_boundary(hc),timezone))
     except Exception as e:
         res = err('Current date has no moonset', 404)
     return res
 
 @app.get("/getPos")
-async def getPosTime(lat: float, lng: float, mode: str = Query(None)):
+async def getPosTime(lat: float, lng: float, mode: str = Query(None), timezone: str = Query("Asia/Shanghai")):
     if mode is None:
         mode = "sun"
     if mode == 'moon':
-        return ok(getMoonPosition(lat, lng))
-    return ok(getSunPosition(lat, lng))
+        return ok(getMoonPosition(lat, lng, timezone))
+    return ok(getSunPosition(lat, lng, timezone))
